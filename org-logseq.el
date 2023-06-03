@@ -215,9 +215,12 @@ or Block Ref or Embed overlays."
     (org-logseq-block-embed-activate)))
 
 (defun org-logseq--make-block-ref-overlays ()
-  (org-logseq-make-block-overlays 'ref))
+  (condition-case _ (org-logseq-make-block-overlays 'ref)
+    (error (message "Error in org-logseq--make-block-ref-overlays"))))
 (defun org-logseq--remove-block-ref-overlays ()
-  (org-logseq-remove-block-overlays 'ref))
+  (condition-case _ (org-logseq-remove-block-overlays 'ref)
+    (error
+     (message "Error in org-logseq--remove-block-ref-overlays"))))
 
 (defun org-logseq-block-ref-activate ()
   (org-logseq--make-block-ref-overlays)
@@ -235,9 +238,9 @@ or Block Ref or Embed overlays."
                          (org-logseq-block-ref-activate))))
 
 (defun org-logseq--make-block-embed-overlays ()
-  (org-logseq-make-block-overlays 'embed))
+  (condition-case _ (org-logseq-make-block-overlays 'embed) (error (message "Error in org-logseq--make-block-embed-overlays"))))
 (defun org-logseq--remove-block-embed-overlays ()
-  (org-logseq-remove-block-overlays 'embed))
+  (condition-case _  (org-logseq-remove-block-overlays 'embed) (error (message "Error in org-logseg--remove-block-embed-overlays"))))
 
 (defun org-logseq-block-embed-activate ()
   (org-logseq--make-block-embed-overlays)
@@ -263,14 +266,15 @@ or Block Ref or Embed overlays."
                   (pcase type
                     ('ref (not (looking-at " *}}")))
                     ('embed t)))
-        (let* ((uuid (match-string-no-properties 1))
+        (unless (org-in-src-block-p)
+          (let* ((uuid (match-string-no-properties 1))
                (tuuid (cons 'id uuid))
                (overlay-end (point))
                (overlay-beg (re-search-backward
                              (pcase type ('ref "((") ('embed "{{"))
                              (line-beginning-position) t))
                (file-type-block (org-logseq-get-block-content tuuid type)))
-          (org-logseq-create-block-overlay overlay-beg overlay-end file-type-block)))))
+          (org-logseq-create-block-overlay overlay-beg overlay-end file-type-block)) ))))
   (set-buffer-modified-p org-logseq-buffer-modified-p))
 
 (defun org-logseq-prepare-embed-content (content)
